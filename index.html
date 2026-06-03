@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LogiTrack - Gestion Professionnelle de Convois</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* ==========================================================================
+           ZONE DE CONFIGURATION ARCHITECTURALE (VARIABLES CSS)
+           ========================================================================== */
+        :root {
+            /* 1. TYPOGRAPHIE SYSTEM-FONT HAUTE PERFORMANCE */
+            --font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            --text-primary: #0f172a;    /* Ardoise très foncée pour une lisibilité maximale */
+            --text-muted: #64748b;      /* Gris acier pour les métadonnées */
+            
+            /* 2. PALETTE DE COULEURS ET FONDS APPLICATIFS */
+            --bg-color: #f8fafc;        /* Blanc de type industriel (très légèrement bleuté) */
+            --card-bg: #ffffff;         /* Surfaces applicatives pures */
+            --navbar-bg: rgba(15, 23, 42, 0.95); /* Ardoise sombre avec transparence */
+            --footer-bg: #0f172a;
+            
+            /* 3. SYSTÈME DE BORDURES ET STRUCTURATION PANELS */
+            --border-color: #e2e8f0;    /* Lignes fines de délimitation */
+            --border-style: 1px solid var(--border-color);
+            --card-radius: 16px;        /* Angles adoucis modernes */
+            --input-radius: 10px;       /* Rayon ergonomique pour les contrôles de formulaire */
+            --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+            --shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.04), 0 4px 6px -4px rgba(15, 23, 42, 0.04);
+
+            /* 4. DESIGNATION SIGNALÉTIQUE ET ACTION (STATUTS UTILS) */
+            --color-primary: #2563eb;   /* Bleu d'ingénierie standard (Corporate Link) */
+            --color-success: #10b981;   /* Vert émeraude opérationnel */
+            --color-warning: #f59e0b;   /* Ambre logistique */
+            --color-info: #06b6d4;      /* Cyan de transit */
+        }
+
+        /* ==========================================================================
+           RÉINITIALISATION ET STRATÉGIE DE GRILLE GLOBALE
+           ========================================================================== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+            padding-bottom: 100px;
+        }
+
+        /* ==========================================================================
+           NAVBAR COMPONENT (EFFET GLASSMORPHISM ET FLUX COMPACT)
+           ========================================================================== */
+        .navbar {
+            background-color: var(--navbar-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            color: white;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 24px;
+        }
+
+        .nav-logo {
+            color: white;
+            font-size: 20px;
+            font-weight: 700;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            letter-spacing: -0.5px;
+        }
+
+        .nav-logo i {
+            color: var(--color-info);
+        }
+
+        .nav-menu {
+            display: flex;
+            list-style: none;
+            gap: 8px;
+        }
+
+        .nav-menu a {
+            color: #94a3b8;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            padding: 8px 16px;
+            border-radius: var(--input-radius);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-menu a:hover {
+            color: white;
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        .nav-menu a.active {
+            color: white;
+            background-color: rgba(37, 99, 235, 0.2);
+            border: 1px solid rgba(37, 99, 235, 0.3);
+        }
+
+        /* ==========================================================================
+           LAYOUT PRINCIPAL ET TYPOGRAPHIE
+           ========================================================================== */
+        .main-content {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 0 24px;
+        }
+
+        .section-title {
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: -0.75px;
+            margin-bottom: 24px;
+            color: var(--text-primary);
+        }
+
+        /* ==========================================================================
+           GRID DES DASHBOARDS STATISTIQUES
+           ========================================================================== */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+
+        .stat-card {
+            background-color: var(--card-bg);
+            border-radius: var(--card-radius);
+            padding: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border: var(--border-style);
+            box-shadow: var(--shadow-sm);
+            transition: all 0.2s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .stat-info h3 {
+            font-size: 13px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+
+        .stat-number {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--text-primary);
+            line-height: 1;
+        }
+
+        .stat-icon-wrapper {
+            width: 52px;
+            height: 52px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+        }
+
+        /* Variations de couleurs sémantiques pro */
+        .card-blue .stat-icon-wrapper { background-color: #eff6ff; color: var(--color-primary); }
+        .card-orange .stat-icon-wrapper { background-color: #fff7ed; color: var(--color-warning); }
+        .card-green .stat-icon-wrapper { background-color: #ecfdf5; color: var(--color-success); }
+
+        /* ==========================================================================
+           TABLE COMPONENT INTERFACE (STRICT ET SOBRE)
+           ========================================================================== */
+        .table-section {
+            background-color: var(--card-bg);
+            border-radius: var(--card-radius);
+            border: var(--border-style);
+            box-shadow: var(--shadow-lg);
+            margin-bottom: 40px;
+            overflow: hidden;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 24px;
+            border-bottom: var(--border-style);
+        }
+
+        .section-header h2 {
+            font-size: 18px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .badge-live {
+            background-color: #f0fdf4;
+            color: var(--color-success);
+            font-size: 11px;
+            font-weight: 600;
+            padding: 6px 12px;
+            border-radius: 9999px;
+            border: 1px solid #bbf7d0;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .badge-live::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            background-color: var(--color-success);
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        th {
+            background-color: #f8fafc;
+            color: var(--text-muted);
+            font-weight: 600;
+            padding: 14px 24px;
+            border-bottom: var(--border-style);
+            text-transform: uppercase;
+            font-size: 12px;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            padding: 16px 24px;
+            border-bottom: var(--border-style);
+            color: #334155;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover td {
+            background-color: #f8fafc;
+        }
+
+        /* Étiquettes de statuts raffinées */
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .status-progress { background-color: #fff7ed; color: #c2410c; border: 1px solid #ffedd5; }
+        .status-pending { background-color: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+        .status-success { background-color: #ecfdf5; color: #047857; border: 1px solid #d1fae5; }
+
+        /* ==========================================================================
+           FORMULAIRE COMPONENT (ALIGNEMENT CHIRURGICAL)
+           ========================================================================== */
+        .form-section {
+            background-color: var(--card-bg);
+            border-radius: var(--card-radius);
+            border: var(--border-style);
+            box-shadow: var(--shadow-lg);
+            padding: 32px;
+        }
+
+        .form-container h2 {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-subtitle {
+            color: var(--text-muted);
+            font-size: 14px;
+            margin-bottom: 28px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+            margin-bottom: 28px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+
+        label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #475569;
+        }
+
+        input, select {
+            padding: 12px 16px;
+            border: var(--border-style);
+            border-radius: var(--input-radius);
+            font-family: var(--font-family);
+            font-size: 14px;
+            background-color: #fff;
+            color: var(--text-primary);
+            box-shadow: var(--shadow-sm);
+            transition: all 0.15s ease-in-out;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+        }
+
+        /* Bouton Action Principal */
+        .btn-submit {
+            background-color: var(--color-primary);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: var(--input-radius);
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);
+            transition: all 0.15s ease;
+        }
+
+        .btn-submit:hover {
+            background-color: #1d4ed8;
+            box-shadow: 0 4px 12px -1px rgba(37, 99, 235, 0.3);
+        }
+
+        /* ==========================================================================
+           FOOTER APPLICATIF
+           ========================================================================== */
+        .footer {
+            background-color: var(--footer-bg);
+            color: #64748b;
+            text-align: center;
+            padding: 24px;
+            font-size: 13px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            margin-top: 60px;
+        }
+
+        /* ==========================================================================
+           RESPONSIVITÉ AVANCÉE (MEDIA QUERIES BREAkPOINTS)
+           ========================================================================== */
+        @media (max-width: 768px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            .nav-container {
+                flex-direction: column;
+                gap: 16px;
+                padding: 16px;
+            }
+            .nav-menu {
+                width: 100%;
+                justify-content: space-between;
+            }
+            .nav-menu a {
+                padding: 6px 12px;
+                font-size: 13px;
+            }
+            .main-content {
+                margin: 20px auto;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="#" class="nav-logo">
+                <i class="fa-solid fa-layer-group"></i> LogiTrack Enterprise
+            </a>
+            <ul class="nav-menu">
+                <li><a href="#dashboard" class="active"><i class="fa-solid fa-chart-line"></i> Dashboard</a></li>
+                <li><a href="#convois"><i class="fa-solid fa-truck-ramp-box"></i> Flux Convois</a></li>
+                <li><a href="#ajouter"><i class="fa-solid fa-plus"></i> Nouveau Plan</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        
+        <section id="dashboard" class="dashboard-section">
+            <h1 class="section-title">Indicateurs de Performance Logistique</h1>
+            
+            <div class="stats-grid">
+                <div class="stat-card card-blue">
+                    <div class="stat-info">
+                        <h3>En Transit</h3>
+                        <p class="stat-number">04</p>
+                    </div>
+                    <div class="stat-icon-wrapper"><i class="fa-solid fa-truck-moving"></i></div>
+                </div>
+                <div class="stat-card card-orange">
+                    <div class="stat-info">
+                        <h3>En Attente Tri</h3>
+                        <p class="stat-number">02</p>
+                    </div>
+                    <div class="stat-icon-wrapper"><i class="fa-solid fa-clock-rotate-left"></i></div>
+                </div>
+                <div class="stat-card card-green">
+                    <div class="stat-info">
+                        <h3>Livrées Déchargées</h3>
+                        <p class="stat-number">18</p>
+                    </div>
+                    <div class="stat-icon-wrapper"><i class="fa-solid fa-boxes-packing"></i></div>
+                </div>
+            </div>
+        </section>
+
+        <section id="convois" class="table-section">
+            <div class="section-header">
+                <h2><i class="fa-solid fa-table-list"></i> Console de Routage Actuelle</h2>
+                <span class="badge-live">Flux Connecté</span>
+            </div>
+            
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Identifiant unique</th>
+                            <th>Hub Départ</th>
+                            <th>Hub Arrivée</th>
+                            <th>Conducteur Assigné</th>
+                            <th>Spécification Châssis</th>
+                            <th>Statut Opérationnel</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>#CNV-0042</strong></td>
+                            <td>Goma</td>
+                            <td>Beni</td>
+                            <td>Kambale Paluku</td>
+                            <td>Mercedes Actros - 12t</td>
+                            <td><span class="status-badge status-progress">En cours</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>#CNV-0043</strong></td>
+                            <td>Kinshasa</td>
+                            <td>Matadi</td>
+                            <td>Jean Mukendi</td>
+                            <td>Volvo FH16</td>
+                            <td><span class="status-badge status-progress">En cours</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>#CNV-0044</strong></td>
+                            <td>Lubumbashi</td>
+                            <td>Kolwezi</td>
+                            <td>Ilunga Ngoie</td>
+                            <td>Scania R500</td>
+                            <td><span class="status-badge status-pending">En attente</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>#CNV-0041</strong></td>
+                            <td>Beni</td>
+                            <td>Butembo</td>
+                            <td>Kakule Kavusa</td>
+                            <td>Fuso Canter</td>
+                            <td><span class="status-badge status-success">Terminé</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="ajouter" class="form-section">
+            <div class="form-container">
+                <h2><i class="fa-solid fa-folder-plus"></i> Planification de Flux Fret</h2>
+                <p class="form-subtitle">Enregistrement et dispatch d'une unité de convoi dans le réseau.</p>
+                
+                <form action="#" method="POST" onsubmit="event.preventDefault(); alert('Données validées et insérées dans le registre.');">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="depart">Ville d'Origine / Hub</label>
+                            <input type="text" id="depart" placeholder="Ex: Goma" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="destination">Destination Finale</label>
+                            <input type="text" id="destination" placeholder="Ex: Beni" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="chauffeur">Opérateur / Chauffeur Principal</label>
+                            <input type="text" id="chauffeur" placeholder="Ex: Kasereka Vianney" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="vehicule">Matricule & Type Matériel</label>
+                            <input type="text" id="vehicule" placeholder="Ex: Actros 4x4" required>
+                        </div>
+
+                        <div class="form-group full-width">
+                            <label for="statut">Niveau d'Urgence initial</label>
+                            <select id="statut">
+                                <option value="attente">File d'attente (Standby)</option>
+                                <option value="cours">Déploiement Immédiat (En cours)</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn-submit">
+                        <i class="fa-solid fa-network-wired"></i> Commiter le transport
+                    </button>
+                </form>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="footer">
+        <p>&copy; 2026 LogiTrack IMS - Conçu pour les architectures de chaîne logistique. Tous droits réservés.</p>
+    </footer>
+
+</body>
+</html>
